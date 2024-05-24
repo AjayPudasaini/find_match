@@ -4,10 +4,12 @@ from datetime import datetime
 class RelatedPersonSimilarityCreate(BaseModel):
     primary_data_id: int
     similar_data_id: int
+    weighted_similarity: float
 
 class RelatedPersonSimilarityResponse(BaseModel):
     id: int
     primary_data_id: int
     similar_data_id: int
+    weighted_similarity: float
     created_at: datetime
     updated_at: datetime
