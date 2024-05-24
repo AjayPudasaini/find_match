@@ -1,0 +1,1 @@
+from models.related_person_similarity import Base

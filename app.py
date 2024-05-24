@@ -1,22 +1,15 @@
-# app.py
-
-from fastapi import FastAPI, HTTPException
-# from ml_model import process_similarity
-import uvicorn
-
+from fastapi import FastAPI
+from database.db import engine
+from database.db import Base
+from router.find_match import router as find_match_router
 app = FastAPI()
 
-# @app.get("/")
-# def read_root():
-#     return {"message": "Welcome to the Find Match Application"}
+Base.metadata.create_all(bind=engine)
 
-@app.get("/find-match")
-def find_match_endpoint():
-    try:
-        # results = process_similarity()
-        return {"similarities": "Test"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+app.include_router(find_match_router)
+
 
 if __name__ == "__main__":
+    import uvicorn
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
+

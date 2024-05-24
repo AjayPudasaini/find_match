@@ -1,20 +1,30 @@
 # ml_model.py
-import os, phonetics, warnings, Levenshtein, tensorflow as tf, numpy as np
+import os
+import phonetics
+import warnings
+import Levenshtein
+import tensorflow as tf
+import numpy as np
 import pandas as pd
 from datetime import datetime
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+from utils.get_data import datas
 
 
 warnings.filterwarnings('ignore')
 
-# Sample DataFrame
-df = pd.DataFrame({
-    "Name": ["Sujan Neupane", "Sulav Neupane", "", "Ranjit Adhikari", "Sushil Karky", "Susheel karkey"],
-    "Citizenship_no": ['1234567899', np.nan, '567866878712', '1213342311', "523121344", "523121344"],
-    "Date_of_birth": ['2020-01-01', '2010-05-29', '', '1999-09-09', '2001-01-01', "2001-01-01"],
-    "Father_Name": ["Sushil Neupane", "Ranjit Neupane", "Utsav Pandey", "Ankit pandey", "Sushil Karkey", "Sushil Karkey"]
-})
+# db_data = datas()
+# print("l18", db_data)
+# # Sample DataFrame
+# df = pd.DataFrame({
+#     "Name": ["Sujan Neupane", "Sulav Neupane", "", "Ranjit Adhikari", "Sushil Karky", "Susheel karkey"],
+#     "Citizenship_no": ['1234567899', np.nan, '567866878712', '1213342311', "523121344", "523121344"],
+#     "Date_of_birth": ['2020-01-01', '2010-05-29', '', '1999-09-09', '2001-01-01', "2001-01-01"],
+#     "Father_Name": ["Sushil Neupane", "Ranjit Neupane", "Utsav Pandey", "Ankit pandey", "Sushil Karkey", "Sushil Karkey"]
+# })
+
+df = datas()
 
 # Preprocess data
 boolean_df = df.eq("")
@@ -78,7 +88,6 @@ def get_similarity_for_DOB_CitizenshipNO(value: str, key: str) -> np.array:
     except Exception as e:
         print(f"An exception occurred in function get_similarity_for_DOB_CitizenshipNO: {e}")
 
-
 def return_weighted_similarity(similarity_matrix: pd.DataFrame) -> pd.DataFrame:
     try:
         weight_matrix = ~similarity_matrix.isnull()
@@ -93,9 +102,9 @@ def return_weighted_similarity(similarity_matrix: pd.DataFrame) -> pd.DataFrame:
         print(f"An exception occurred in function return_weighted_similarity: {e}")
 
 
-def process_similarity():
+def get_final_result_df() -> pd.DataFrame:
     subset_df = df[["NAME_Preprocessed", "Citizenship_no", "Date_of_birth", "FatherName_Preprocessed"]].copy()
-    final_result = []
+    all_similarity_values = []
 
     for current_row_index in range(len(subset_df)):
         similarity_values = {}
@@ -111,16 +120,19 @@ def process_similarity():
                     
         similarity_values = pd.DataFrame(similarity_values)[["NAME_Preprocessed", "Citizenship_no", "FatherName_Preprocessed", "Date_of_birth"]]
         similarity_values = return_weighted_similarity(similarity_values)
-        mask = similarity_values['weighted_similarity'] > 0.9
-        duplicae_indexes = df[mask].index.to_list()
-        duplicates = [(current_row_index, val) for val in duplicae_indexes]
-
-        while (current_row_index, current_row_index) in duplicates:
-            duplicates.remove((current_row_index, current_row_index))
-            
-        unique_tuples = {tuple(sorted(t)) for t in duplicates}
-        result = list(unique_tuples)
-        final_result += result
+        print("l122", similarity_values)
+        all_similarity_values.append(similarity_values['weighted_similarity'])
     
-    final_result = list(set(final_result))
-    return final_result
+    # Add weighted similarities to the DataFrame
+    df['weighted_similarity'] = [similarities.values[0] for similarities in all_similarity_values]
+
+    # Format the weighted_similarity column
+    df['weighted_similarity'] = df['weighted_similarity'].apply(lambda x: float('%.3f' % x))
+    df['weighted_similarity'] = df['weighted_similarity'].values * 100
+
+    return df
+
+# Example usage:
+if __name__ == "__main__":
+    final_df = get_final_result_df()
+    print(final_df)
