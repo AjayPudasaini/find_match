@@ -131,6 +131,7 @@ class DuplicateFinder:
         for pair in final_result:
             primary_customer_id, similar_screening_id = pair
             weighted_similarity = max(similarity_scores[final_result.index(pair)] for pair in final_result if primary_customer_id in pair or similar_screening_id in pair)
+            screen_id = max(similarity_scores[final_result.index(pair)] for pair in final_result if primary_customer_id in pair or similar_screening_id in pair)
             
             final_output.append({
                 "primary_customer_id": primary_customer_id,
