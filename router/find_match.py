@@ -1,45 +1,36 @@
+# routes/find_match.py
 from typing import List
 from fastapi import HTTPException, Depends
 from sqlalchemy.orm import Session
 from fastapi import APIRouter
-
+from datetime import datetime
 from database.db import get_db
 from schemas.related_person_similarity import RelatedPersonSimilarityCreate, RelatedPersonSimilarityResponse
 from models.related_person_similarity import RelatedPersonSimilarity as RelatedPersonSimilarityModel
-from ml_model.ml_model import get_final_result_df
-from pydantic import parse_obj_as
-
+from ml_model.ml_model import final_output
 
 router = APIRouter(
     prefix="/find-match",
     tags=["Find Match"]
 )
 
-
 def save_data_to_db(data: List[RelatedPersonSimilarityCreate], db: Session):
+    print("l18", data)
     for item in data:
         new_entry = RelatedPersonSimilarityModel(
-            primary_data_id=item.primary_data_id,
-            similar_data_id=item.similar_data_id
+            primary_data_id=item.get("primary_customer_id"),
+            similar_data_id=item.get("similar_screening_id"),
+            weighted_similarity=item.get("weighted_similarity"),
         )
         db.add(new_entry)
     db.commit()
 
-@router.get("/", response_model=List[RelatedPersonSimilarityResponse])
+@router.get("/")
 def find_match(db: Session = Depends(get_db)):
     try:
-        results = get_final_result_df()
-        # Validate and parse the data using Pydantic
-        parsed_results = parse_obj_as(List[RelatedPersonSimilarityCreate], results)
-        # Save the parsed data to the database
-        save_data_to_db(parsed_results, db)
-        
-        # Retrieve the saved data to return in the response
-        saved_data = db.query(RelatedPersonSimilarityModel).filter(
-            RelatedPersonSimilarityModel.primary_data_id.in_([result.primary_data_id for result in parsed_results]),
-            RelatedPersonSimilarityModel.similar_data_id.in_([result.similar_data_id for result in parsed_results])
-        ).all()
-
-        return saved_data
+        data = final_output
+        save_data_to_db(data, db)
+        return data
+    
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -11,5 +11,6 @@ class RelatedPersonSimilarityResponse(BaseModel):
     primary_data_id: int
     similar_data_id: int
     weighted_similarity: float
-    created_at: datetime
-    updated_at: datetime
+
+    class Config:
+        orm_mode = True
