@@ -1,13 +1,16 @@
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from dotenv import load_dotenv
 
-# DATABASE_URL = "postgresql://data_cleaning:data_cleaning%40123@172.16.99.100:5432/data_cleaning"
-# DATABASE_URL = "postgresql://ajay:1530ajay@localhost/rawa"
+load_dotenv()
 
+# Get the database URL from environment variables
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL environment variable is not set")
 
-DATABASE_URL = "postgresql://postgres:datum%40123@202.166.198.129:5080/taml_datum2"
-print("l10", DATABASE_URL)
 engine = create_engine(DATABASE_URL)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

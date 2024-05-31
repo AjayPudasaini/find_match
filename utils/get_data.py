@@ -30,8 +30,6 @@ def fetch_data_from_db(db: Session) -> pd.DataFrame:
         'dob_bs': 'Date_of_birth',
         'father_name': 'Father_Name'
     }, inplace=True)
-
-    print(df.head(5))
     return df
 
 def datas():

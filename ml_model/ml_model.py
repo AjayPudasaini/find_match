@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import tensorflow as tf
 import re, phonetics, Levenshtein
@@ -11,6 +12,7 @@ from utils.get_data import datas
 
 import warnings
 warnings.filterwarnings("ignore")
+
 
 class DuplicateFinder:
     def __init__(self, dataframe: pd.DataFrame, model_path: str):
@@ -85,7 +87,7 @@ class DuplicateFinder:
             print(f"An exception occurred in function return_weighted_similarity: {e}")
 
     def find_duplicates(self, threshold: float = 90.0) -> List[Dict[str, Any]]:
-        subset_df = self.df[["NAME_Preprocessed", "Citizenship_no", "Date_of_birth", "FatherName_Preprocessed"]].copy()
+        subset_df = self.df[["id", "NAME_Preprocessed", "Citizenship_no", "Date_of_birth", "FatherName_Preprocessed"]].copy()
         final_result = []
         similarity_scores = []
 
@@ -93,6 +95,8 @@ class DuplicateFinder:
             similarity_values = {}
             row = subset_df.iloc[current_row_index].to_dict()
             for key, val in row.items():
+                if key == "id":
+                    continue
                 if val == np.nan or val == "":
                     similarity_values[key] = np.repeat(np.nan, self.df.shape[0])
                 else:
@@ -129,9 +133,10 @@ class DuplicateFinder:
         final_output = []
 
         for pair in final_result:
-            primary_customer_id, similar_screening_id = pair
-            weighted_similarity = max(similarity_scores[final_result.index(pair)] for pair in final_result if primary_customer_id in pair or similar_screening_id in pair)
-            screen_id = max(similarity_scores[final_result.index(pair)] for pair in final_result if primary_customer_id in pair or similar_screening_id in pair)
+            primary_customer_index, similar_screening_index = pair
+            primary_customer_id = self.df.at[primary_customer_index, "id"]
+            similar_screening_id = self.df.at[similar_screening_index, "id"]
+            weighted_similarity = max(similarity_scores[final_result.index(pair)] for pair in final_result if primary_customer_index in pair or similar_screening_index in pair)
             
             final_output.append({
                 "primary_customer_id": primary_customer_id,
@@ -151,12 +156,9 @@ class DuplicateFinder:
 # })
 
 df = datas()
-# print("l152", df)
 
-model_path = '/home/ch/projects/python/datum_ml/Weight_Mapping_NN.keras'
+base_dir = os.path.dirname(os.path.abspath(__file__))
+model_path = os.path.join(base_dir, 'Weight_Mapping_NN.keras')
 
 finder = DuplicateFinder(df, model_path)
-print("l157", finder)
 final_output = finder.find_duplicates()
-
-# print(final_output)

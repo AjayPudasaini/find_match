@@ -2,6 +2,10 @@ from fastapi import FastAPI
 from database.db import engine
 from database.db import Base
 from router.find_match import router as find_match_router
+from dotenv import load_dotenv
+load_dotenv()
+
+
 app = FastAPI()
 
 Base.metadata.create_all(bind=engine)
